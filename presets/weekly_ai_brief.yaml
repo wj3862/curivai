@@ -1,0 +1,11 @@
+name: weekly_ai_brief
+display_name: "每周AI创业简报"
+description: "每周日自动生成本周AI创业领域要闻合集"
+radar_pack: tech_overseas
+persona: ai_entrepreneur
+days: 7
+lite_budget: 40
+auto_pick_count: 5
+auto_pick_filter: "可写"
+merge_strategy: roundup
+export_format: wechat

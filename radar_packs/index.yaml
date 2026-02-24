@@ -1,0 +1,5 @@
+packs:
+  - name: tech_overseas
+    file: tech_overseas.yaml
+  - name: ai_frontier
+    file: ai_frontier.yaml

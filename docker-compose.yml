@@ -1,0 +1,27 @@
+services:
+  curivai:
+    build: .
+    container_name: curivai
+    restart: unless-stopped
+    ports:
+      - "3891:3891"
+    volumes:
+      # Persist database and config
+      - curivai_data:/data
+    environment:
+      # LLM configuration (required)
+      - CURIVAI_LLM_API_KEY=${CURIVAI_LLM_API_KEY:-}
+      - CURIVAI_LLM_BASE_URL=${CURIVAI_LLM_BASE_URL:-}
+      - CURIVAI_LLM_MODEL=${CURIVAI_LLM_MODEL:-gpt-4.1-mini}
+      # Override server bind to 0.0.0.0 inside container
+      - CURIVAI_CONFIG=/data/config.yaml
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3891/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  curivai_data:
+    driver: local

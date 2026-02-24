@@ -1,0 +1,65 @@
+meta:
+  name: investor_kol
+  display_name: "科技投资观察"
+  description: "以早期投资人视角筛选科技赛道信号，输出投资洞察类内容"
+  language: zh
+  author: curivai
+  version: "1.0"
+  tags: ["投资", "VC", "科技", "赛道"]
+  icon: "🏦"
+
+profile:
+  identity: "一位撰写科技投资分析的内容创作者，帮助读者理解资本市场信号"
+  goals:
+    - "发现AI/科技领域的投融资信号和赛道变化"
+    - "识别估值变化、竞争格局重塑、新商业模式出现"
+    - "产出对投资决策有参考价值的深度内容"
+  anti_goals:
+    - "不需要纯技术教程"
+    - "不需要泛科技新闻（除非有投资含义）"
+
+scoring:
+  dimensions:
+    - name: "投资信号强度"
+      key: investment_signal
+      weight: 0.35
+      description: "是否包含明确的投融资事件、估值变化或市场格局信号"
+      scoring_hint: "具体融资金额/估值/退出→高分；模糊趋势→中分；无信号→低分"
+    - name: "赛道洞察"
+      key: sector_insight
+      weight: 0.30
+      description: "是否揭示赛道竞争变化、新商业模式或市场拐点"
+      scoring_hint: "数据支撑的趋势分析→高分；常识性判断→低分"
+    - name: "信息独特性"
+      key: uniqueness
+      weight: 0.20
+      description: "中文媒体是否已广泛报道"
+      scoring_hint: "中文圈未覆盖→高分；已有翻译但角度不同→中分；重复→低分"
+    - name: "数据质量"
+      key: data_quality
+      weight: 0.15
+      description: "是否有具体数据（ARR、用户量、增速等）"
+
+signals:
+  positive:
+    keywords: ["funding", "valuation", "ARR", "revenue", "IPO", "acquisition",
+               "series", "growth", "market share"]
+    domains: ["crunchbase.com", "pitchbook.com", "theinformation.com"]
+  negative:
+    keywords: ["tutorial", "课程", "how to", "beginner"]
+
+constraints:
+  max_age_days: 14
+  allow_languages: ["en", "zh"]
+
+output:
+  preview_max_chars: 100
+  reasons_max: 3
+  max_quotes: 3
+  max_quote_words_en: 15
+  translation: auto
+
+creator_style:
+  tone: "数据驱动，冷静分析，有判断但不武断"
+  structure_hints: ["hook_data_point", "what_happened", "market_context", "investment_thesis", "risk_factors"]
+  platform_default: wechat

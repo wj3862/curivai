@@ -1,0 +1,11 @@
+name: daily_tech_scan
+display_name: "每日技术前沿扫描"
+description: "每天早上生成开发者工具速递"
+radar_pack: ai_frontier
+persona: tech_translator
+days: 1
+lite_budget: 20
+auto_pick_count: 3
+auto_pick_filter: "可写"
+merge_strategy: brief
+export_format: wechat

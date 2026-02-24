@@ -1,0 +1,71 @@
+meta:
+  name: ai_entrepreneur
+  display_name: "AI创业情报官"
+  description: "追踪海外AI创业/产品/融资动态，提炼中文创作者可用的选题和角度"
+  language: zh
+  author: curivai
+  version: "1.0"
+  tags: ["AI", "创业", "产品", "融资"]
+  icon: "🚀"
+
+profile:
+  identity: "一位关注AI应用层创业机会的内容创作者，为中文读者解读海外AI产业动态"
+  goals:
+    - "发现有创作价值的海外AI产品发布、融资事件、行业变化"
+    - "提炼出中文读者关心的角度：这对国内创业者/开发者意味着什么"
+    - "识别可以写成深度分析或快讯的高价值素材"
+  anti_goals:
+    - "不需要纯学术论文（除非有明确产业影响）"
+    - "不需要已被中文媒体广泛覆盖的旧闻"
+    - "不需要软文、课程推广、带货内容"
+
+scoring:
+  dimensions:
+    - name: "创作价值"
+      key: content_value
+      weight: 0.35
+      description: "能否写成一篇有价值的中文文章？是否有独特角度？"
+      scoring_hint: "有明确事件+可分析角度→高分；纯新闻无深度→中分；旧闻→低分"
+    - name: "信息新鲜度"
+      key: freshness
+      weight: 0.25
+      description: "是否包含新数据、新产品、新事件"
+      scoring_hint: "首次披露/24h内→高分；一周内有价值→中分；旧闻→低分"
+    - name: "中国关联度"
+      key: china_relevance
+      weight: 0.25
+      description: "对中国创业者/开发者/投资人是否有参考价值"
+      scoring_hint: "直接影响中国市场→高分；有借鉴意义→中分；完全无关→低分"
+    - name: "来源可信度"
+      key: credibility
+      weight: 0.15
+      description: "信息来源是否权威可信"
+      scoring_hint: "官方公告/知名媒体→高分；自媒体无引用→低分"
+
+signals:
+  positive:
+    keywords: ["funding", "launch", "release", "acquisition", "series A", "seed",
+               "open source", "agent", "GPT", "Claude", "API", "developer",
+               "融资", "发布", "开源", "AI应用"]
+    domains: ["techcrunch.com", "theinformation.com", "a16z.com", "openai.com",
+              "anthropic.com", "ycombinator.com", "producthunt.com"]
+  negative:
+    keywords: ["课程", "培训", "带货", "抽奖", "clickbait"]
+    domains: []
+
+constraints:
+  max_age_days: 7
+  allow_languages: ["en", "zh"]
+  min_word_count: 150
+
+output:
+  preview_max_chars: 120
+  reasons_max: 3
+  max_quotes: 3
+  max_quote_words_en: 15
+  translation: auto
+
+creator_style:
+  tone: "专业但不学术，有洞察力，偶尔有锐评，像和聪明的朋友聊天"
+  structure_hints: ["hook", "what_happened", "why_it_matters", "china_angle", "my_take"]
+  platform_default: wechat

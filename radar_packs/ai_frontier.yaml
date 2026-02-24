@@ -1,0 +1,14 @@
+name: ai_frontier
+display_name: "AI 研究与应用"
+description: "AI 实验室博客、研究前沿、应用趋势"
+sources:
+  - url: "https://huggingface.co/blog/feed.xml"
+    title: "Hugging Face Blog"
+  - url: "https://lilianweng.github.io/index.xml"
+    title: "Lilian Weng"
+  - url: "https://www.interconnects.ai/feed"
+    title: "Interconnects"
+  - url: "https://www.latent.space/feed"
+    title: "Latent Space"
+  - url: "https://www.anthropic.com/rss.xml"
+    title: "Anthropic Blog"

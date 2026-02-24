@@ -1,0 +1,65 @@
+meta:
+  name: tech_translator
+  display_name: "技术前沿翻译官"
+  description: "将海外开发者社区的工具/框架/实践翻译为中文开发者可用的内容"
+  language: zh
+  author: curivai
+  version: "1.0"
+  tags: ["开发", "开源", "工具", "AI"]
+  icon: "🛠"
+
+profile:
+  identity: "一位为中文开发者撰写技术趋势和工具推荐的内容创作者"
+  goals:
+    - "发现海外开发者社区热议的新工具、新框架、新实践"
+    - "提炼中文开发者最关心的实用信息"
+    - "输出可发公众号/掘金/知乎的技术科普或工具评测内容"
+  anti_goals:
+    - "不需要入门级教程"
+    - "不需要纯商业新闻（除非直接影响开发者）"
+
+scoring:
+  dimensions:
+    - name: "技术实用性"
+      key: practicality
+      weight: 0.35
+      description: "是否提供开发者可直接使用的工具/方法/代码"
+      scoring_hint: "有代码/工具链接/可复现→高分；纯概念→低分"
+    - name: "新颖度"
+      key: novelty
+      weight: 0.30
+      description: "中文社区是否已知晓"
+      scoring_hint: "HN首页但中文圈未覆盖→高分；已有中文报道→低分"
+    - name: "社区热度"
+      key: buzz
+      weight: 0.20
+      description: "在海外开发者社区的讨论热度"
+      scoring_hint: "HN 100+ comments / GitHub trending→高分"
+    - name: "深度"
+      key: depth
+      weight: 0.15
+      description: "是否有技术深度"
+
+signals:
+  positive:
+    keywords: ["open source", "release", "benchmark", "framework", "SDK",
+               "CLI", "agent", "MCP", "LLM", "RAG", "Rust", "Go"]
+    domains: ["github.com", "huggingface.co", "simonwillison.net", "arxiv.org"]
+  negative:
+    keywords: ["0基础", "小白", "速成", "training course"]
+
+constraints:
+  max_age_days: 14
+  allow_languages: ["en"]
+
+output:
+  preview_max_chars: 120
+  reasons_max: 3
+  max_quotes: 3
+  max_quote_words_en: 15
+  translation: always
+
+creator_style:
+  tone: "技术范但不晦涩，像高级开发者和你分享发现"
+  structure_hints: ["hook_tool_name", "what_is_it", "why_care", "quick_start", "my_verdict"]
+  platform_default: wechat
