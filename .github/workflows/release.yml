@@ -12,7 +12,7 @@ on:
 
 jobs:
   build-windows:
-    name: Build Windows exe
+    name: Build Windows Installer
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,8 +38,6 @@ jobs:
       - name: Package Windows exe
         run: npx @yao-pkg/pkg dist/cli.js --targets node20-win-x64 --output release/CurivAI.exe --compress GZip
 
-      # Copy the native better-sqlite3 binding next to the exe
-      # (pkg cannot bundle native .node files; they must ship alongside the exe)
       - name: Copy native SQLite binding
         shell: pwsh
         run: |
@@ -48,26 +46,33 @@ jobs:
             Copy-Item $binding.FullName release/better_sqlite3.node
             Write-Host "Copied: $($binding.FullName)"
           } else {
-            Write-Error "better_sqlite3.node not found — build failed"
+            Write-Error "better_sqlite3.node not found"
             exit 1
           }
 
-      - name: Create release zip
+      - name: Generate app icon
+        shell: pwsh
+        run: powershell -ExecutionPolicy Bypass -File installer/make-icon.ps1
+
+      - name: Build Windows installer (Inno Setup)
         shell: pwsh
         run: |
-          Compress-Archive -Path release/CurivAI.exe, release/better_sqlite3.node -DestinationPath release/CurivAI-windows-x64.zip
+          $version = if ($env:GITHUB_REF -match 'refs/tags/v(.+)') { $Matches[1] } else { '0.1.0' }
+          $env:APP_VERSION = $version
+          & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer/curivai.iss
+          Write-Host "Installer built: release/CurivAI-Setup.exe"
 
-      - name: Upload artifact
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
-          name: CurivAI-windows-x64
-          path: release/CurivAI-windows-x64.zip
+          name: CurivAI-Setup-Windows
+          path: release/CurivAI-Setup.exe
 
       - name: Create GitHub Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: release/CurivAI-windows-x64.zip
+          files: release/CurivAI-Setup.exe
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
