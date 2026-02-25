@@ -7,6 +7,35 @@ import { logger } from '../shared/logger.js';
 
 let dbInstance: Database.Database | null = null;
 
+/**
+ * When running inside a pkg-bundled executable, better-sqlite3's native .node
+ * file must be loaded from the real filesystem (not pkg's virtual snapshot).
+ * We look next to the executable first, then fall back to require.resolve()
+ * which pkg remaps to the extracted temp directory.
+ */
+function resolveNativeBinding(): string | undefined {
+  if (!(process as unknown as { pkg?: unknown }).pkg) return undefined;
+
+  // 1. Check next to the executable (user can place it there manually)
+  const execDir = path.dirname(process.execPath);
+  const nextToExe = path.join(execDir, 'better_sqlite3.node');
+  if (fs.existsSync(nextToExe)) return nextToExe;
+
+  // 2. Try require.resolve — pkg extracts .node assets to a temp dir and
+  //    remaps require() to the extracted path.
+  const candidates = [
+    'better-sqlite3/build/Release/better_sqlite3.node',
+    `better-sqlite3/prebuilds/${process.platform}-${process.arch}/node.napi.node`,
+  ];
+  for (const p of candidates) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      return (require as NodeJS.Require).resolve(p);
+    } catch { /* try next */ }
+  }
+  return undefined;
+}
+
 export function initDb(dbPath: string): Database.Database {
   if (dbInstance) return dbInstance;
 
@@ -17,7 +46,8 @@ export function initDb(dbPath: string): Database.Database {
   }
 
   try {
-    const db = new Database(resolved);
+    const bindingPath = resolveNativeBinding();
+    const db = new Database(resolved, bindingPath ? { nativeBinding: bindingPath } : undefined);
     db.pragma('journal_mode = WAL');
     db.pragma('foreign_keys = ON');
     db.pragma('busy_timeout = 5000');

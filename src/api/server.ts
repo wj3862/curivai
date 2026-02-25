@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { exec } from 'node:child_process';
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -12,7 +13,8 @@ import { logger } from '../shared/logger.js';
 import { initDb, closeDb, resetDbInstance } from '../db/db.js';
 import { runMigrations } from '../db/migrate.js';
 import { loadConfig } from '../shared/config.js';
-import { resolvePath, getPackageRoot } from '../shared/utils.js';
+import { resolvePath, getPackageRoot, getCurivaiDir } from '../shared/utils.js';
+import { writeDefaultConfig } from '../shared/config.js';
 import { syncAllPersonas } from '../persona/loader.js';
 import { initLlmClient } from '../llm/client.js';
 import { sourceRoutes } from './routes/sources.js';
@@ -97,7 +99,51 @@ function errorCodeToHttpStatus(code: string): number {
   }
 }
 
-export async function startServer(opts: { port?: number } = {}): Promise<void> {
+/**
+ * Open a URL in the default system browser (cross-platform).
+ */
+function openBrowser(url: string): void {
+  const cmd =
+    process.platform === 'win32' ? `start "" "${url}"` :
+    process.platform === 'darwin' ? `open "${url}"` :
+    `xdg-open "${url}"`;
+  exec(cmd, (err) => {
+    if (err) logger.warn({ err: err.message }, 'Could not open browser automatically');
+  });
+}
+
+/**
+ * Run first-time setup if ~/.curivai/ does not exist yet.
+ * Safe to call every time — all ops are idempotent.
+ */
+function autoInit(): void {
+  const curivaiDir = getCurivaiDir();
+  const configPath = path.join(curivaiDir, 'config.yaml');
+  const personasDir = path.join(curivaiDir, 'personas');
+
+  if (!fs.existsSync(configPath)) {
+    writeDefaultConfig(configPath);
+    logger.info('First run: created ~/.curivai/config.yaml');
+  }
+
+  // Copy built-in persona YAMLs if personas dir is empty
+  fs.mkdirSync(personasDir, { recursive: true });
+  const builtinDir = path.join(getPackageRoot(), 'personas');
+  if (fs.existsSync(builtinDir)) {
+    const files = fs.readdirSync(builtinDir).filter(f => f.endsWith('.yaml'));
+    for (const file of files) {
+      const dest = path.join(personasDir, file);
+      if (!fs.existsSync(dest)) {
+        fs.copyFileSync(path.join(builtinDir, file), dest);
+      }
+    }
+  }
+}
+
+export async function startServer(opts: { port?: number; open?: boolean } = {}): Promise<void> {
+  // Auto-init on first run (especially important for double-clicked exe)
+  autoInit();
+
   const config = await loadConfig();
   const port = opts.port ?? config.server.port;
   const host = config.server.host;
@@ -118,10 +164,26 @@ export async function startServer(opts: { port?: number } = {}): Promise<void> {
   logger.info({ port, host }, 'Starting CurivAI server');
 
   serve({ fetch: app.fetch, port, hostname: host }, (info) => {
+    const url = `http://localhost:${info.port}`;
     // eslint-disable-next-line no-console
-    console.log(`CurivAI server running at http://${host}:${info.port}`);
+    console.log('');
     // eslint-disable-next-line no-console
-    console.log(`Web UI: http://${host}:${info.port}/`);
+    console.log('  ╔══════════════════════════════════════╗');
+    // eslint-disable-next-line no-console
+    console.log('  ║   CurivAI  AI 信息管家               ║');
+    // eslint-disable-next-line no-console
+    console.log(`  ║   ${url.padEnd(38)}║`);
+    // eslint-disable-next-line no-console
+    console.log('  ║   按 Ctrl+C 停止服务                  ║');
+    // eslint-disable-next-line no-console
+    console.log('  ╚══════════════════════════════════════╝');
+    // eslint-disable-next-line no-console
+    console.log('');
+
+    if (opts.open) {
+      // Small delay so the server is ready before the browser hits it
+      setTimeout(() => openBrowser(url), 800);
+    }
   });
 
   // Start scheduler

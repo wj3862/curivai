@@ -508,11 +508,13 @@ program
 // === server ===
 program
   .command('server')
-  .description('Start the API server')
+  .description('Start the API server and web UI')
   .option('-p, --port <n>', 'Port number')
-  .action(async (opts: { port?: string }) => {
+  .option('--open', 'Open browser automatically on startup')
+  .action(async (opts: { port?: string; open?: boolean }) => {
     await startServer({
       port: opts.port ? parseInt(opts.port, 10) : undefined,
+      open: opts.open ?? false,
     });
   });
 
@@ -1103,6 +1105,14 @@ presetCmd
 function log(msg: string): void {
   // eslint-disable-next-line no-console
   console.log(msg);
+}
+
+// When running as a pkg-bundled .exe with no subcommand (i.e. double-clicked),
+// default to "server --open" so the browser opens automatically.
+const isPkg = !!(process as unknown as { pkg?: unknown }).pkg;
+const hasSubcommand = process.argv.slice(2).some(a => !a.startsWith('-'));
+if (isPkg && !hasSubcommand) {
+  process.argv.splice(2, 0, 'server', '--open');
 }
 
 program.parse();
