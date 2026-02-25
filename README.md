@@ -2,107 +2,136 @@
 
 **你的 AI 信息管家 — 自己选源，AI 帮你筛，跨语言阅读，一键出稿。**
 
-CurivAI 是一个开源 AI 工作台，帮助中文内容创作者将海外英文信息源（HN、TechCrunch、a16z 等）转化为微信/小红书/抖音可用的内容草稿。
+CurivAI 是一个开源 AI 工作台，帮助中文内容创作者将海外英文信息源（HN、TechCrunch、a16z 等）转化为微信公众号 / 小红书 / 抖音可用的内容草稿。
 
 ```
-海外英文信息源 → AI 筛选评分 → 多视角对比 → 一键生成草稿 → 导出发布
+海外英文信息源 → CheapFilter 预筛 → AI 评分 → 多视角对比 → 生成草稿 → 导出发布
 ```
 
 ---
 
 ## 核心功能
 
-**Persona 系统** — 用"视角"驱动筛选，而不是关键词过滤
+### Persona 系统
+用"创作者视角"驱动筛选，而不是关键词过滤。同一篇文章在不同 Persona 下会得到截然不同的评分和创作角度：
 
-每个 Persona 代表一种创作者身份（AI 创业情报官、科技投资观察、技术前沿翻译官），定义了评分维度和偏好信号。同一篇文章在不同 Persona 下可能得到截然不同的分数和创作角度。
+| Persona | 关注方向 | 默认平台 |
+|---------|---------|---------|
+| 🚀 AI 创业情报官 | AI 产品发布、融资、创业机会 | 微信公众号 |
+| 🏦 科技投资观察 | 投融资信号、赛道格局、市场数据 | 微信公众号 |
+| 🛠 技术前沿翻译官 | 开发者工具、开源项目、技术趋势 | 微信公众号 |
 
-**两级评分**
+### 两级评分引擎
+1. **CheapFilter** — 零 LLM 调用的启发式预筛，毫秒级完成，输出 Token 漏斗统计
+2. **ScorePack Lite / Full** — LLM 深度评分，输出中文摘要、维度评分、行动建议（可写 / 可提 / 可转 / 跳过）、创作角度
 
-1. **CheapFilter** — 零 LLM 调用的启发式预筛，每次运行只花毫秒
-2. **ScorePack Lite/Full** — LLM 深度评分，输出中文摘要、评分、行动建议、创作角度
+### Studio 创作工作流
+收藏文章 → 素材篮（自动触发 Full 评分）→ 填写个人观点 → 生成草稿 → 导出微信 / 小红书 / 抖音脚本
 
-**Studio 工作流** — 从素材到草稿
-
-选文章 → 加入素材篮（自动触发 Full 评分）→ 填写自己的观点 → 一键生成草稿 → 导出公众号/小红书/抖音格式
-
-**版权合规内置** — Export Linter 强制要求来源标注，禁止全文翻译
+### 版权合规内置
+Export Linter 强制要求来源标注，禁止全文翻译，硬拦截不合规导出。
 
 ---
 
 ## 快速开始
 
-### 本地运行
+### 方式一：Windows 安装包（推荐）
+
+前往 [Releases](https://github.com/wj3862/curivai/releases) 下载 `CurivAI-Setup.exe`，双击安装。
+
+安装后桌面会生成快捷方式，双击即可启动——自动完成首次初始化并在浏览器打开 `http://localhost:3891`。
+
+### 方式二：本地运行（开发 / 命令行）
+
+**环境要求：** Node.js 20+、pnpm
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourname/curivai
+git clone https://github.com/wj3862/curivai
 cd curivai
-
-# 安装依赖
 pnpm install
 
 # 配置 LLM（任意 OpenAI 兼容接口）
-export CURIVAI_LLM_API_KEY=sk-...
-export CURIVAI_LLM_MODEL=gpt-4.1-mini   # 或 deepseek-chat、qwen2.5 等
+cp .env.example .env
+# 编辑 .env，填入 CURIVAI_LLM_API_KEY 和 CURIVAI_LLM_MODEL
 
-# 初始化（创建 DB、复制 Persona、生成默认 config）
+# 初始化（创建 DB、复制 Persona、生成默认配置）
 pnpm dev init
 
-# 安装内置源包（HN、TechCrunch、a16z 等）
+# 安装内置源包
 pnpm dev source install-pack tech_overseas
 pnpm dev source install-pack ai_frontier
 
 # 抓取文章
 pnpm dev ingest --limit 200
 
-# AI 评分（以 AI 创业情报官视角）
+# AI 评分
 pnpm dev score --persona ai_entrepreneur --budget 30
 
-# 查看推荐
-pnpm dev feed --persona ai_entrepreneur --top 10
-
 # 启动 Web 界面
-pnpm dev server
+pnpm server
 # → http://localhost:3891
 ```
 
-### Docker（推荐生产部署）
+### 方式三：Docker
 
 ```bash
-# 复制环境变量
-cp .env.example .env
-# 编辑 .env，填入 CURIVAI_LLM_API_KEY
-
-# 构建并启动
-docker compose up -d
-
-# → http://localhost:3891
+cp .env.example .env   # 填入 CURIVAI_LLM_API_KEY
+docker compose up -d   # → http://localhost:3891
 ```
 
 ---
 
 ## Web 界面
 
-启动 `curivai server` 后访问 `http://localhost:3891`。
-
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│ 🚀 AI创业情报官  │  🏦 科技投资观察  │  🛠 技术前沿翻译官     │
+│  🚀 AI创业情报官  │  🏦 科技投资观察  │  🛠 技术前沿翻译官  │+│
 ├──────────────────────────────────────────────────────────────┤
-│  发现                创作               管理                 │
+│   发现       │      创作        │      管理      │    设置    │
 └──────────────────────────────────────────────────────────────┘
 ```
 
-**发现页** — 按评分排列的文章卡片，含中文摘要和创作角度建议
-- ⭐ 加入素材篮（自动触发 Full 评分升级）
-- 📐 多视角对比——同一篇文章在所有 Persona 下的评分对比
+**发现页**
+- 评分结果视图：按分数排列的文章卡片，含中文摘要和创作角度
+- 候选文章视图：CheapFilter 预筛后的完整候选列表（LLM 评分前预览），支持批量选中直接触发评分
+- Token 漏斗统计：展示「总量 → CheapFilter → LLM 评分 → 可创作」各环节的转化率和 Token 消耗
+- 关键词搜索：在已评分文章中实时过滤
+- ⭐ 收藏到素材篮（自动触发 Full 评分升级）
+- 📐 多视角对比（同一篇文章在所有 Persona 下的评分对比，仅读缓存不触发新调用）
 
-**创作页** — 三栏布局
-- 左：素材篮（已收藏文章）+ 合并策略 + 你的观点
-- 中：AI 生成的 Markdown 草稿
-- 右：公众号 / 小红书 / 抖音脚本预览 + 一键复制
+**创作页**
+- 左栏：素材篮 + 合并策略（周报 / 简报 / 对比）+ 个人观点输入
+- 中栏：AI 生成的 Markdown 草稿，可直接编辑
+- 右栏：公众号 / 小红书 / 抖音脚本实时预览，一键复制
 
 **管理页** — 订阅源管理、OPML 导入、安装源包、立即抓取
+
+**设置页** — 界面内直接修改 LLM 参数、评分阈值、预算限额、采集配置、邮件推送，热更新生效无需重启
+
+---
+
+## LLM 提供商
+
+任意 OpenAI 兼容接口均可：
+
+| 提供商 | `CURIVAI_LLM_BASE_URL` | 推荐模型 |
+|--------|------------------------|---------|
+| OpenAI | （留空） | `gpt-4.1-mini` |
+| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
+| SiliconFlow | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` |
+| Ollama | `http://localhost:11434/v1` | `qwen2.5:14b` |
+
+**估算成本（gpt-4.1-mini）：**
+
+| 操作 | 单次成本 | 月均成本 |
+|------|---------|---------|
+| Lite 评分（每篇） | ~$0.001 | — |
+| Full 评分（每篇） | ~$0.003 | — |
+| Compose 草稿 | ~$0.005 | — |
+| 日常使用（30 Lite + 5 Full + 1 Compose/天） | ~$0.05/天 | **~$1.5** |
+| DeepSeek | — | **~$0.3** |
+| Ollama 本地 | — | **$0** |
 
 ---
 
@@ -124,7 +153,7 @@ curivai ingest [--limit 200]
 # 评分与浏览
 curivai score --persona ai_entrepreneur [--budget 30] [--days 3]
 curivai feed  --persona ai_entrepreneur [--top 20]
-curivai compare <itemId>          # 多视角对比（仅缓存，不触发新调用）
+curivai compare <itemId>              # 多视角对比（仅缓存）
 
 # 创作工作流
 curivai pick add <id1> <id2> <id3> --persona ai_entrepreneur
@@ -138,43 +167,10 @@ curivai autopilot --persona ai_entrepreneur --type wechat --out draft.md --yes
 curivai preset run weekly_ai_brief --out weekly.md --yes
 
 # 系统
-curivai doctor          # 检查 DB、LLM、源、Persona
+curivai doctor          # 检查 DB / LLM / 源 / Persona
 curivai stats           # 使用量统计
-curivai server          # 启动 API + Web UI
+curivai server          # 启动 API + Web UI（支持 --open 自动打开浏览器）
 ```
-
----
-
-## LLM 提供商
-
-任意 OpenAI 兼容接口均可，无需修改代码：
-
-| 提供商 | `CURIVAI_LLM_BASE_URL` | 推荐模型 |
-|--------|------------------------|---------|
-| OpenAI | （留空） | `gpt-4.1-mini` |
-| DeepSeek | `https://api.deepseek.com` | `deepseek-chat` |
-| SiliconFlow | `https://api.siliconflow.cn/v1` | `Qwen/Qwen2.5-72B-Instruct` |
-| Ollama | `http://localhost:11434/v1` | `qwen2.5:14b` |
-
-**估算成本（gpt-4.1-mini）：**
-- 每篇 Lite 评分：~$0.001
-- 每篇 Full 评分：~$0.003
-- 每篇草稿 Compose：~$0.005
-- 日常使用（30 Lite + 5 Full + 1 Compose）：~$0.05/天 ≈ **$1.5/月**
-- 使用 DeepSeek：约 **$0.3/月**
-- 使用 Ollama：**$0**
-
----
-
-## 内置 Persona
-
-| Persona | 关注方向 | 默认平台 |
-|---------|---------|---------|
-| 🚀 AI 创业情报官 | AI 产品发布、融资、创业机会 | 微信公众号 |
-| 🏦 科技投资观察 | 投融资信号、赛道格局、市场数据 | 微信公众号 |
-| 🛠 技术前沿翻译官 | 开发者工具、开源项目、技术趋势 | 微信公众号 |
-
-自定义 Persona：在 `~/.curivai/personas/` 下创建 YAML 文件，格式参考 `personas/ai_entrepreneur.yaml`。
 
 ---
 
@@ -182,14 +178,14 @@ curivai server          # 启动 API + Web UI
 
 | 源包 | 包含来源 |
 |------|---------|
-| `tech_overseas` | HN、TechCrunch、The Verge、a16z、Simon Willison、Stratechery、OpenAI Blog |
+| `tech_overseas` | Hacker News、TechCrunch、The Verge、a16z Blog、Simon Willison、Stratechery、OpenAI Blog、Changelog |
 | `ai_frontier` | Hugging Face Blog、Lilian Weng、Interconnects、Latent Space、Anthropic Blog |
 
 ---
 
 ## 邮件推送
 
-在 `~/.curivai/config.yaml` 中配置：
+在设置页或 `~/.curivai/config.yaml` 中配置：
 
 ```yaml
 delivery:
@@ -199,7 +195,6 @@ delivery:
     smtp_port: 587
     smtp_user: you@gmail.com
     smtp_pass: your-app-password
-    from: digest@curivai.app
     to:
       - you@gmail.com
 
@@ -208,11 +203,7 @@ schedule:
   digest_cron:  "0 8 * * *"    # 每天 8 点发送摘要邮件
 ```
 
-或手动触发：
-
-```bash
-curl -X POST http://localhost:3891/api/digest/send
-```
+手动触发：`curl -X POST http://localhost:3891/api/digest/send`
 
 ---
 
@@ -223,34 +214,42 @@ curivai/
 ├── src/
 │   ├── cli/          # CLI 命令（commander）
 │   ├── api/          # REST API（Hono）
-│   ├── engine/       # 核心智能（cheapFilter、scorePack、compose、autopilot…）
+│   │   └── routes/   # sources / ingest / score / studio / personas / system …
+│   ├── engine/       # 核心引擎（cheapFilter、scorePack、compose、autopilot、preset）
 │   ├── studio/       # 创作工作流（picked、drafts、export、lint）
-│   ├── source/       # 数据管道（RSS adapter、extract、dedup、ingest）
-│   ├── persona/      # Persona schema + loader
-│   ├── llm/          # LLM client + prompts + parse
-│   ├── push/         # Email sender + scheduler
-│   └── db/           # SQLite + migrations
-├── web/              # React 18 + Vite + Tailwind + shadcn/ui
-├── personas/         # 内置 Persona YAML
-├── radar_packs/      # 内置源包
-├── presets/          # 工作流预设
-├── docs/             # ARCHITECTURE.md / SECURITY.md / PROMPTS.md
-└── samples/          # 示例输出
+│   ├── source/       # 数据管道（RSS adapter、readability 提取、dedup、ingest）
+│   ├── persona/      # Persona schema（Zod）+ loader
+│   ├── llm/          # LLM client + prompts + parse + retry
+│   ├── push/         # Email sender（MJML）+ node-cron scheduler
+│   └── db/           # SQLite（better-sqlite3）+ migrations
+├── web/              # React 18 + Vite + Tailwind CSS + shadcn/ui
+│   └── src/
+│       ├── pages/    # FeedPage / StudioPage / SourcesPage / SettingsPage
+│       └── components/ # PersonaSwitcher / ScoreCard / CompareModal / FunnelPanel / CandidatesPanel
+├── installer/        # Windows Inno Setup 安装脚本
+├── personas/         # 内置 Persona YAML（3 个）
+├── radar_packs/      # 内置源包（2 个）
+├── presets/          # 工作流预设（weekly_ai_brief、daily_tech_scan）
+├── templates/        # 导出模板（wechat / xhs / douyin）
+└── docs/             # ARCHITECTURE.md / SECURITY.md / PROMPTS.md
 ```
 
 ---
 
 ## 技术栈
 
-- **Runtime**: Node.js 20+ / TypeScript (ESM)
-- **API**: Hono
-- **DB**: SQLite（better-sqlite3）
-- **Web**: React 18 + Vite + Tailwind CSS + shadcn/ui
-- **LLM**: OpenAI SDK（兼容任意提供商）
-- **Email**: nodemailer + MJML
-- **Scheduler**: node-cron
-- **Schema**: Zod（所有数据形状的唯一事实来源）
-- **Tests**: Vitest（174 个测试）
+| 层 | 技术 |
+|----|------|
+| Runtime | Node.js 20+ / TypeScript (ESM) / pnpm |
+| API | Hono |
+| DB | SQLite（better-sqlite3） |
+| Web | React 18 + Vite + Tailwind CSS + shadcn/ui |
+| LLM | OpenAI SDK（兼容任意 OpenAI-compatible 提供商） |
+| Schema | Zod（所有数据形状的唯一事实来源） |
+| Email | nodemailer + MJML |
+| Scheduler | node-cron |
+| Tests | Vitest（174/174 通过） |
+| Packaging | @yao-pkg/pkg + Inno Setup（Windows 安装包） |
 
 ---
 
@@ -262,4 +261,4 @@ curivai/
 
 ## License
 
-Apache-2.0
+[Apache-2.0](LICENSE)
