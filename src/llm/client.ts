@@ -32,7 +32,7 @@ export class LlmClient {
   private activeRequests = 0;
 
   constructor(config: Config['llm']) {
-    this.baseUrl = config.base_url || 'https://api.openai.com';
+    this.baseUrl = config.base_url || 'https://api.openai.com/v1';
     this.apiKey = config.api_key;
     this.model = config.model;
     this.maxTokens = config.max_tokens;
@@ -56,7 +56,7 @@ export class LlmClient {
   }
 
   private async doRequest(messages: LlmMessage[]): Promise<LlmResponse> {
-    const url = `${this.baseUrl.replace(/\/$/, '')}/v1/chat/completions`;
+    const url = `${this.baseUrl.replace(/\/+$/, '')}/chat/completions`;
 
     const body = JSON.stringify({
       model: this.model,
