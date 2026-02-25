@@ -1,5 +1,6 @@
 node_modules/
 dist/
+release/
 .curivai/
 .env
 *.db
@@ -7,3 +8,4 @@ dist/
 *.db-wal
 *.db-shm
 .DS_Store
+.pvr/

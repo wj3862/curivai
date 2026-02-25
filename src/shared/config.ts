@@ -181,3 +181,33 @@ export async function loadConfig(force = false): Promise<Config> {
 export function resetConfigCache(): void {
   cachedConfig = null;
 }
+
+/**
+ * Persist config to ~/.curivai/config.yaml and update in-memory cache.
+ */
+export function saveConfig(config: Config): void {
+  const configPath = path.join(getCurivaiDir(), 'config.yaml');
+  const yaml = yamlStringify(config as unknown as Record<string, unknown>);
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  fs.writeFileSync(configPath, yaml, 'utf-8');
+  cachedConfig = config;
+}
+
+/**
+ * Deep-merge a plain-object patch into a target object in place.
+ */
+export function deepMerge(
+  target: Record<string, unknown>,
+  source: Record<string, unknown>,
+): void {
+  for (const key of Object.keys(source)) {
+    const sv = source[key];
+    const tv = target[key];
+    if (sv !== null && typeof sv === 'object' && !Array.isArray(sv) &&
+        tv !== null && typeof tv === 'object' && !Array.isArray(tv)) {
+      deepMerge(tv as Record<string, unknown>, sv as Record<string, unknown>);
+    } else {
+      target[key] = sv;
+    }
+  }
+}

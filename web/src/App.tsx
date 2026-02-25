@@ -1,21 +1,23 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Rss, BookOpen, Layers, Activity } from 'lucide-react';
+import { Rss, BookOpen, Layers, Activity, Settings } from 'lucide-react';
 import { PersonaSwitcher } from './components/PersonaSwitcher';
 import { CompareModal } from './components/CompareModal';
 import { FeedPage } from './pages/FeedPage';
 import { StudioPage } from './pages/StudioPage';
 import { SourcesPage } from './pages/SourcesPage';
+import { SettingsPage } from './pages/SettingsPage';
 import { Toaster } from './components/ui/toaster';
 import { api, type Persona } from './lib/api';
 import { toast } from './hooks/use-toast';
 import { cn } from './lib/utils';
 
-type Page = 'feed' | 'studio' | 'sources';
+type Page = 'feed' | 'studio' | 'sources' | 'settings';
 
 const NAV: { id: Page; label: string; icon: React.ReactNode }[] = [
   { id: 'feed', label: '发现', icon: <Rss className="h-4 w-4" /> },
   { id: 'studio', label: '创作', icon: <BookOpen className="h-4 w-4" /> },
   { id: 'sources', label: '管理', icon: <Layers className="h-4 w-4" /> },
+  { id: 'settings', label: '设置', icon: <Settings className="h-4 w-4" /> },
 ];
 
 export default function App() {
@@ -131,8 +133,9 @@ export default function App() {
             />
           )}
           {page === 'sources' && <SourcesPage />}
+          {page === 'settings' && <SettingsPage />}
 
-          {!activePersona && (
+          {!activePersona && page !== 'settings' && (
             <div className="flex items-center justify-center h-full text-muted-foreground">
               <p>正在加载…</p>
             </div>

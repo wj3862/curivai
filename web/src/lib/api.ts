@@ -117,6 +117,109 @@ export interface RadarPack {
   installed: boolean;
 }
 
+export interface AppConfig {
+  llm: {
+    base_url: string;
+    api_key: string;   // '***' when masked
+    model: string;
+    max_tokens: number;
+    temperature: number;
+    timeout_ms: number;
+    max_concurrent: number;
+  };
+  ingest: {
+    default_concurrency: number;
+    content_excerpt_chars: number;
+    fetch_timeout_ms: number;
+  };
+  scoring: {
+    cheap_threshold: number;
+    default_budget: number;
+    default_days: number;
+    cheap_weights: {
+      freshness: number;
+      keyword_match: number;
+      source_trust: number;
+      language_match: number;
+      length_sanity: number;
+      duplicate_penalty: number;
+    };
+    topic_dedup: {
+      lookback_days: number;
+      exact_penalty: number;
+      fuzzy_threshold: number;
+      fuzzy_penalty: number;
+    };
+  };
+  budget: {
+    max_llm_calls_per_run: number;
+    max_cost_usd_per_run: number;
+    cost_per_call_estimate: number;
+  };
+  schedule: {
+    ingest_cron: string;
+    digest_cron: string;
+  };
+  delivery: {
+    email: {
+      enabled: boolean;
+      smtp_host: string;
+      smtp_port: number;
+      smtp_user: string;
+      smtp_pass: string;
+      from: string;
+      to: string[];
+    };
+  };
+}
+
+export interface FunnelStats {
+  funnel: {
+    total_items: number;
+    cheap_evaluated: number;
+    cheap_above_threshold: number;
+    lite_scored: number;
+    full_upgraded: number;
+  };
+  action_breakdown: { 可写: number; 可提: number; 可转: number; 跳过: number };
+  tokens: {
+    lite_total: number;
+    full_total: number;
+    lite_cost_usd: number;
+    full_cost_usd: number;
+    estimated_cost_usd: number;
+  };
+  efficiency: {
+    cost_per_actionable: number | null;
+    actionable_rate: number | null;
+  };
+}
+
+export interface CandidateItem {
+  item_id: string;
+  original_title: string;
+  url: string;
+  published_at: string | null;
+  word_count: number | null;
+  lang: string | null;
+  source_title: string | null;
+  site_domain: string | null;
+  cheap_score: number;
+  cn_title: string | null;
+  score_overall: number | null;
+  action: string | null;
+  pack_level: string | null;
+  is_llm_scored: boolean;
+}
+
+export interface CandidatesResult {
+  persona: string;
+  days: number;
+  q: string;
+  count: number;
+  items: CandidateItem[];
+}
+
 // ─── API ──────────────────────────────────────────────────────────────────────
 
 export const api = {
@@ -141,16 +244,23 @@ export const api = {
       })) as FeedItem[];
     },
 
-    score: async (persona: string, budget = 30, days = 3) => {
+    score: async (persona: string, budget = 30, days = 3, item_ids?: string[]) => {
       const res = await request<{
         persona: string;
-        stats: { scored: number; skipped: number; cached: number };
+        stats: { scored: number; cached: number; failed: number };
       }>(`/score/${persona}`, {
         method: 'POST',
-        body: JSON.stringify({ budget, days }),
+        body: JSON.stringify({ budget, days, ...(item_ids ? { item_ids } : {}) }),
       });
       return res.stats;
     },
+  },
+
+  // ─── Candidates ───────────────────────────────────────────────────────────
+
+  candidates: {
+    get: (persona: string, days = 7, q = '') =>
+      request<CandidatesResult>(`/candidates/${persona}?days=${days}&q=${encodeURIComponent(q)}`),
   },
 
   // ─── Compare ──────────────────────────────────────────────────────────────
@@ -279,5 +389,12 @@ export const api = {
         items_with_content: number;
         duplicates: number;
       }>('/stats'),
+    getFunnel: (persona: string) => request<FunnelStats>(`/stats/funnel/${persona}`),
+    getConfig: () => request<AppConfig>('/config'),
+    updateConfig: (patch: Partial<AppConfig>) =>
+      request<{ saved: boolean; config: AppConfig }>('/config', {
+        method: 'PATCH',
+        body: JSON.stringify(patch),
+      }),
   },
 };

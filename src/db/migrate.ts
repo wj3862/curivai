@@ -1,14 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import type Database from 'better-sqlite3';
 import { DbError } from '../shared/errors.js';
 import { logger } from '../shared/logger.js';
+import { getPackageRoot } from '../shared/utils.js';
 
-const MIGRATIONS_DIR = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  'migrations',
-);
+function getMigrationsDir(): string {
+  return path.join(getPackageRoot(), 'src', 'db', 'migrations');
+}
 
 function ensureMigrationsTable(db: Database.Database): void {
   db.exec(`
@@ -25,12 +24,13 @@ function getAppliedMigrations(db: Database.Database): Set<string> {
 }
 
 function getPendingMigrations(applied: Set<string>): string[] {
-  if (!fs.existsSync(MIGRATIONS_DIR)) {
-    throw new DbError(`Migrations directory not found: ${MIGRATIONS_DIR}`);
+  const migrationsDir = getMigrationsDir();
+  if (!fs.existsSync(migrationsDir)) {
+    throw new DbError(`Migrations directory not found: ${migrationsDir}`);
   }
 
   const files = fs
-    .readdirSync(MIGRATIONS_DIR)
+    .readdirSync(migrationsDir)
     .filter((f) => f.endsWith('.sql'))
     .sort();
 
@@ -47,7 +47,7 @@ export function runMigrations(db: Database.Database): { applied: string[]; skipp
   const skipped = [...alreadyApplied];
 
   for (const migration of pending) {
-    const filePath = path.join(MIGRATIONS_DIR, migration);
+    const filePath = path.join(getMigrationsDir(), migration);
     const sql = fs.readFileSync(filePath, 'utf-8');
 
     const runInTransaction = db.transaction(() => {

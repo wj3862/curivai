@@ -39,7 +39,8 @@ export function CompareModal({ itemId, onClose }: Props) {
     if (!itemId) return;
     setComputing(persona);
     try {
-      await api.feed.score(persona, 1);
+      // Pass item_ids to score exactly this item, not whatever cheap-filter picks
+      await api.feed.score(persona, 1, 7, [itemId]);
       const fresh = await api.compare.get(itemId);
       setData(fresh);
       toast({ title: '评分完成' });

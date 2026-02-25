@@ -51,10 +51,11 @@ export function createApp(ctx: AppContext): Hono {
   app.route('/api', digestRoutes(ctx));
 
   // Serve web dashboard static files if built
+  // Use absolute path so this works in both development and pkg executables.
   const webDistPath = path.join(getPackageRoot(), 'dist', 'web');
   if (fs.existsSync(webDistPath)) {
-    app.use('/*', serveStatic({ root: './dist/web' }));
-    app.get('/*', serveStatic({ path: './dist/web/index.html' }));
+    app.use('/*', serveStatic({ root: webDistPath }));
+    app.get('/*', serveStatic({ path: path.join(webDistPath, 'index.html') }));
   }
 
   // Global error handler
